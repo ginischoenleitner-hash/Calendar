@@ -20,5 +20,5 @@
     <string name="cycle_phase_menstruation">Menstruation</string>
     <string name="cycle_phase_follicular">Follikelphase</string>
     <string name="cycle_phase_ovulation">Eisprung</string>
-    <string name="cycle_phase_luteal">Lutealphase</string>
+    <string name="cycle_phase_pms">PMS-Phase</string>
 </resources>

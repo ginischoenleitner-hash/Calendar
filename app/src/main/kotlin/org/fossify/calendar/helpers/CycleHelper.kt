@@ -11,18 +11,21 @@ import org.joda.time.LocalDate
 
 /**
  * A boundary of a cycle phase, expressed in days (never weeks).
- * Cycle days are 1-based: day 1 is the first day of the period.
+ * Cycle days are 1-based: day 1 is the first day of the period, the last cycle day is the day before the next period starts.
  */
 sealed class CycleDay {
     /** The n-th day of the cycle, counted from the first day of the period (1 = first day). */
     data class FromStart(val day: Int) : CycleDay()
 
-    /** Counted back from the last day of the cycle (0 = last day, 14 = fourteen days before the last day). */
-    data class FromEnd(val daysBeforeEnd: Int) : CycleDay()
+    /**
+     * Counted back from the end of the cycle, i.e. from the first day of the next period:
+     * 1 = the last cycle day, 7 = seven days before the next period starts.
+     */
+    data class BeforeCycleEnd(val days: Int) : CycleDay()
 
     fun resolve(cycleLength: Int): Int = when (this) {
         is FromStart -> day
-        is FromEnd -> cycleLength - daysBeforeEnd
+        is BeforeCycleEnd -> cycleLength + 1 - days
     }.coerceIn(1, cycleLength)
 }
 
@@ -49,38 +52,44 @@ data class CycleDayInfo(
 
 object CycleHelper {
     /**
-     * The cycle phases, in order. The first phase whose range contains a cycle day wins.
+     * The cycle phases, in order. The first phase whose range contains a cycle day wins,
+     * so for very short cycles earlier phases take precedence. Days not covered by any phase stay uncolored.
      *
-     * PLACEHOLDER definitions, to be replaced with the user's own phase definitions.
+     * Example for a 28 day cycle:
+     *  - Menstruation:   days 1–6
+     *  - Follikelphase:  days 7–9   (from day 7 until the ovulation window starts)
+     *  - Eisprung:       days 10–16 (19 to 13 days before the cycle end)
+     *  - (no phase):     days 17–21
+     *  - PMS-Phase:      days 22–28 (the last 7 days)
      */
     val PHASES: List<CyclePhase> = listOf(
         CyclePhase(
             id = "menstruation",
             nameRes = R.string.cycle_phase_menstruation,
             start = CycleDay.FromStart(1),
-            end = CycleDay.FromStart(5),
-            defaultColor = 0xFFF6C1CB.toInt()   // pastel rose
+            end = CycleDay.FromStart(6),
+            defaultColor = 0xFFF7B7B7.toInt()   // light red
         ),
         CyclePhase(
             id = "follicular",
             nameRes = R.string.cycle_phase_follicular,
-            start = CycleDay.FromStart(6),
-            end = CycleDay.FromEnd(16),
-            defaultColor = 0xFFCDEBD6.toInt()   // pastel mint
+            start = CycleDay.FromStart(7),
+            end = CycleDay.BeforeCycleEnd(20),
+            defaultColor = 0xFFC6E8C0.toInt()   // light green
         ),
         CyclePhase(
             id = "ovulation",
             nameRes = R.string.cycle_phase_ovulation,
-            start = CycleDay.FromEnd(15),
-            end = CycleDay.FromEnd(13),
-            defaultColor = 0xFFFFE1B8.toInt()   // pastel apricot
+            start = CycleDay.BeforeCycleEnd(19),
+            end = CycleDay.BeforeCycleEnd(13),
+            defaultColor = 0xFFDCCCF2.toInt()   // light purple
         ),
         CyclePhase(
-            id = "luteal",
-            nameRes = R.string.cycle_phase_luteal,
-            start = CycleDay.FromEnd(12),
-            end = CycleDay.FromEnd(0),
-            defaultColor = 0xFFDCD4F2.toInt()   // pastel lavender
+            id = "pms",
+            nameRes = R.string.cycle_phase_pms,
+            start = CycleDay.BeforeCycleEnd(7),
+            end = CycleDay.BeforeCycleEnd(1),
+            defaultColor = 0xFFFFD4A8.toInt()   // light orange
         )
     )
 
