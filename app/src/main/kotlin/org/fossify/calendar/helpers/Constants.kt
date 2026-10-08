@@ -346,3 +346,12 @@ fun getAccessLevelStringFromEventAccessLevel(accessLevel: Int): String {
         else -> PUBLIC
     }
 }
+
+// menstrual cycle tracking
+const val CYCLE_TRACKING_ENABLED = "cycle_tracking_enabled"
+const val CYCLE_LENGTH = "cycle_length"
+const val CYCLE_PERIOD_STARTS = "cycle_period_starts"
+const val CYCLE_PHASE_COLOR_PREFIX = "cycle_phase_color_"
+const val DEFAULT_CYCLE_LENGTH = 28
+const val MIN_CYCLE_LENGTH = 15
+const val MAX_CYCLE_LENGTH = 60

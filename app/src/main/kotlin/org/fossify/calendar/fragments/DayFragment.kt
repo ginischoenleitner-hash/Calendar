@@ -17,6 +17,7 @@ import org.fossify.calendar.extensions.config
 import org.fossify.calendar.extensions.eventsHelper
 import org.fossify.calendar.extensions.getViewBitmap
 import org.fossify.calendar.extensions.printBitmap
+import org.fossify.calendar.extensions.showDayLongPressActions
 import org.fossify.calendar.helpers.*
 import org.fossify.calendar.interfaces.NavigationListener
 import org.fossify.calendar.models.Event
@@ -80,11 +81,45 @@ class DayFragment : Fragment() {
             setOnClickListener {
                 (activity as MainActivity).showGoToDateDialog()
             }
+            setOnLongClickListener {
+                requireActivity().showDayLongPressActions(mDayCode)
+                true
+            }
             setTextColor(context.getProperTextColor())
         }
     }
 
+    // tints the whole day with the color of its menstrual cycle phase and shows the cycle day under the date
+    private fun applyCycleInfo() {
+        val context = context ?: return
+        if (!::binding.isInitialized || !::topNavigationBinding.isInitialized) {
+            return
+        }
+
+        val dayTitle = Formatter.getDayTitle(context, mDayCode)
+        val calculator = CycleHelper.getCalculator(context)
+        val info = calculator?.getInfo(mDayCode)
+        val phaseColor = calculator?.getPhaseColor(mDayCode)
+
+        topNavigationBinding.topValue.text = if (info == null) {
+            dayTitle
+        } else {
+            val cycleDay = getString(R.string.cycle_day_label, info.cycleDay)
+            val phaseName = info.phase?.let { " · ${getString(it.nameRes)}" } ?: ""
+            "$dayTitle\n$cycleDay$phaseName"
+        }
+        topNavigationBinding.topValue.contentDescription = topNavigationBinding.topValue.text
+
+        if (phaseColor == null) {
+            binding.dayHolder.background = null
+        } else {
+            val color = CycleHelper.getDisplayColor(phaseColor, context.getProperBackgroundColor())
+            binding.dayHolder.setBackgroundColor(color.adjustAlpha(0.5f))
+        }
+    }
+
     fun updateCalendar() {
+        applyCycleInfo()
         val startTS = Formatter.getDayStartTS(mDayCode)
         val endTS = Formatter.getDayEndTS(mDayCode)
         context?.eventsHelper?.getEvents(startTS, endTS) {

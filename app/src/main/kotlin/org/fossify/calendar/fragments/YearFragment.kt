@@ -14,6 +14,7 @@ import org.fossify.calendar.extensions.config
 import org.fossify.calendar.extensions.getProperDayIndexInWeek
 import org.fossify.calendar.extensions.getViewBitmap
 import org.fossify.calendar.extensions.printBitmap
+import org.fossify.calendar.helpers.CycleHelper
 import org.fossify.calendar.helpers.YEAR_LABEL
 import org.fossify.calendar.helpers.YearlyCalendarImpl
 import org.fossify.calendar.interfaces.NavigationListener
@@ -108,6 +109,8 @@ class YearFragment : Fragment(), YearlyCalendar {
             monthView.firstDay = requireContext().getProperDayIndexInWeek(firstDayOfMonth)
             val numberOfDays = dateTime.withMonthOfYear(monthOfYear).dayOfMonth().maximumValue
             monthView.setDays(numberOfDays)
+            monthView.setYearAndMonth(mYear, monthOfYear)
+            monthView.setCycleCalculator(CycleHelper.getCalculator(requireContext()))
             monthView.setOnClickListener {
                 (activity as MainActivity).openMonthFromYearly(DateTime().withDate(mYear, monthOfYear, 1))
             }
@@ -166,6 +169,9 @@ class YearFragment : Fragment(), YearlyCalendar {
         if (!isAdded) {
             return
         }
+
+        val cycleCalculator = CycleHelper.getCalculator(requireContext())
+        monthHolders.forEach { it.smallMonthView.setCycleCalculator(cycleCalculator) }
 
         if (hashCode == lastHash) {
             return

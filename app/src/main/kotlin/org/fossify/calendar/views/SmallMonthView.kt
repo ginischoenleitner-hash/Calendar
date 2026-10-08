@@ -9,8 +9,11 @@ import android.view.View
 import org.fossify.calendar.R
 import org.fossify.calendar.extensions.config
 import org.fossify.calendar.extensions.isWeekendIndex
+import org.fossify.calendar.helpers.CycleCalculator
+import org.fossify.calendar.helpers.CycleHelper
 import org.fossify.calendar.models.DayYearly
 import org.fossify.commons.extensions.adjustAlpha
+import org.fossify.commons.extensions.getProperBackgroundColor
 import org.fossify.commons.extensions.getProperPrimaryColor
 import org.fossify.commons.extensions.getProperTextColor
 import org.fossify.commons.helpers.FontHelper
@@ -28,6 +31,10 @@ class SmallMonthView(context: Context, attrs: AttributeSet, defStyle: Int) : Vie
     private var highlightWeekends = false
     private var isPrintVersion = false
     private var mEvents: ArrayList<DayYearly>? = null
+    private var cycleCalculator: CycleCalculator? = null
+    private var cyclePaint = Paint()
+    private var year = 0
+    private var month = 0
 
     var firstDay = 0
     var todaysId = 0
@@ -37,6 +44,17 @@ class SmallMonthView(context: Context, attrs: AttributeSet, defStyle: Int) : Vie
     fun setDays(days: Int) {
         this.days = days
         invalidate()
+    }
+
+    fun setYearAndMonth(year: Int, month: Int) {
+        this.year = year
+        this.month = month
+        invalidate()
+    }
+
+    fun setCycleCalculator(calculator: CycleCalculator?) {
+        cycleCalculator = calculator
+        post { invalidate() }
     }
 
     fun setEvents(events: ArrayList<DayYearly>?) {
@@ -92,6 +110,7 @@ class SmallMonthView(context: Context, attrs: AttributeSet, defStyle: Int) : Vie
         for (y in 1..6) {
             for (x in 1..7) {
                 if (curId in 1..days) {
+                    drawCycleBackground(canvas, curId, x, y)
                     val textPaint = getPaint(curId, x, highlightWeekends)
                     val centerX = x * dayWidth - dayWidth / 2
                     val centerY = y * dayWidth - dayWidth / 2
@@ -105,6 +124,20 @@ class SmallMonthView(context: Context, attrs: AttributeSet, defStyle: Int) : Vie
                 curId++
             }
         }
+    }
+
+    private fun drawCycleBackground(canvas: Canvas, dayOfMonth: Int, x: Int, y: Int) {
+        val calculator = cycleCalculator ?: return
+        if (isPrintVersion || year == 0 || month == 0) {
+            return
+        }
+
+        val dayCode = String.format(java.util.Locale.ROOT, "%04d%02d%02d", year, month, dayOfMonth)
+        val phaseColor = calculator.getPhaseColor(dayCode) ?: return
+        cyclePaint.color = CycleHelper.getDisplayColor(phaseColor, context.getProperBackgroundColor())
+        val left = (x - 1) * dayWidth
+        val top = (y - 1) * dayWidth
+        canvas.drawRect(left, top, left + dayWidth, top + dayWidth, cyclePaint)
     }
 
     private fun getPaint(curId: Int, weekDay: Int, highlightWeekends: Boolean): Paint {

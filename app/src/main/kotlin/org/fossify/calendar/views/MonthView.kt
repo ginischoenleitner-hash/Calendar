@@ -10,6 +10,8 @@ import android.view.View
 import org.fossify.calendar.R
 import org.fossify.calendar.extensions.*
 import org.fossify.calendar.helpers.COLUMN_COUNT
+import org.fossify.calendar.helpers.CycleCalculator
+import org.fossify.calendar.helpers.CycleHelper
 import org.fossify.calendar.helpers.Formatter
 import org.fossify.calendar.helpers.ROW_COUNT
 import org.fossify.calendar.models.DayMonthly
@@ -64,6 +66,8 @@ class MonthView(context: Context, attrs: AttributeSet, defStyle: Int) : View(con
     private var days = ArrayList<DayMonthly>()
     private var dayVerticalOffsets = SparseIntArray()
     private var selectedDayCoords = Point(-1, -1)
+    private var cycleCalculator: CycleCalculator? = null
+    private var cyclePaint = Paint()
 
     constructor(context: Context, attrs: AttributeSet) : this(context, attrs, 0)
 
@@ -122,6 +126,7 @@ class MonthView(context: Context, attrs: AttributeSet, defStyle: Int) : View(con
     fun updateDays(newDays: ArrayList<DayMonthly>, isMonthDayView: Boolean) {
         this.isMonthDayView = isMonthDayView
         days = newDays
+        cycleCalculator = CycleHelper.getCalculator(context)
         showWeekNumbers = config.showWeekNumbers
         horizontalOffset = context.getWeekNumberWidth()
         initWeekDayLetters()
@@ -177,6 +182,7 @@ class MonthView(context: Context, attrs: AttributeSet, defStyle: Int) : View(con
         super.onDraw(canvas)
         dayVerticalOffsets.clear()
         measureDaySize(canvas)
+        drawCycleBackgrounds(canvas)
 
         if (config.showGrid && !isMonthDayView) {
             drawGrid(canvas)
@@ -276,6 +282,30 @@ class MonthView(context: Context, attrs: AttributeSet, defStyle: Int) : View(con
             for (event in allEvents) {
                 drawEvent(event, canvas)
             }
+        }
+    }
+
+    // fills every day cell with the pastel color of its menstrual cycle phase
+    private fun drawCycleBackgrounds(canvas: Canvas) {
+        val calculator = cycleCalculator ?: return
+        if (isPrintVersion) {
+            return
+        }
+
+        val backgroundColor = context.getProperBackgroundColor()
+        days.forEachIndexed { index, day ->
+            val phaseColor = calculator.getPhaseColor(day.code) ?: return@forEachIndexed
+            var color = CycleHelper.getDisplayColor(phaseColor, backgroundColor)
+            if (!day.isThisMonth) {
+                color = color.adjustAlpha(0.5f)
+            }
+
+            cyclePaint.color = color
+            val x = index % COLUMN_COUNT
+            val y = index / COLUMN_COUNT
+            val left = x * dayWidth + horizontalOffset
+            val top = y * dayHeight + weekDaysLetterHeight
+            canvas.drawRect(left, top, left + dayWidth, top + dayHeight, cyclePaint)
         }
     }
 

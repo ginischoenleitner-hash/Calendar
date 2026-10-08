@@ -41,6 +41,7 @@ import org.fossify.calendar.fragments.MonthFragmentsHolder
 import org.fossify.calendar.fragments.MyFragmentHolder
 import org.fossify.calendar.fragments.WeekFragmentsHolder
 import org.fossify.calendar.fragments.YearFragmentsHolder
+import org.fossify.calendar.helpers.CycleHelper
 import org.fossify.calendar.helpers.ANNIVERSARY_EVENT
 import org.fossify.calendar.helpers.BIRTHDAY_EVENT
 import org.fossify.calendar.helpers.DAILY_VIEW
@@ -159,6 +160,7 @@ class MainActivity : SimpleActivity(), RefreshRecyclerViewListener {
     private var mStoredHighlightWeekends = false
     private var mStoredStartWeekWithCurrentDay = false
     private var mStoredHighlightWeekendsColor = 0
+    private var mStoredCycleSignature = ""
 
     // search results have endless scrolling, so reaching the top/bottom fetches further results
     private var minFetchedSearchTS = 0L
@@ -258,6 +260,9 @@ class MainActivity : SimpleActivity(), RefreshRecyclerViewListener {
             || mStoredHighlightWeekends != config.highlightWeekends || mStoredHighlightWeekendsColor != config.highlightWeekendsColor
         ) {
             updateViewPager()
+        } else if (mStoredCycleSignature != CycleHelper.getSignature(this)) {
+            mStoredCycleSignature = CycleHelper.getSignature(this)
+            refreshViewPager()
         }
 
         eventsHelper.getCalendars(this, false) {
@@ -416,6 +421,7 @@ class MainActivity : SimpleActivity(), RefreshRecyclerViewListener {
             mStoredStartWeekWithCurrentDay = startWeekWithCurrentDay
         }
         mStoredDayCode = Formatter.getTodayCode()
+        mStoredCycleSignature = CycleHelper.getSignature(this)
     }
 
     private fun setupQuickFilter() {

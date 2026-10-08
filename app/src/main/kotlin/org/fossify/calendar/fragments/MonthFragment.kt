@@ -14,6 +14,7 @@ import org.fossify.calendar.databinding.TopNavigationBinding
 import org.fossify.calendar.extensions.config
 import org.fossify.calendar.extensions.getViewBitmap
 import org.fossify.calendar.extensions.printBitmap
+import org.fossify.calendar.helpers.CycleHelper
 import org.fossify.calendar.helpers.Config
 import org.fossify.calendar.helpers.DAY_CODE
 import org.fossify.calendar.helpers.Formatter
@@ -88,7 +89,7 @@ class MonthFragment : Fragment(), MonthlyCalendar {
     }
 
     override fun updateMonthlyCalendar(context: Context, month: String, days: ArrayList<DayMonthly>, checkedEvents: Boolean, currTargetDate: DateTime) {
-        val newHash = month.hashCode() + days.hashCode().toLong()
+        val newHash = month.hashCode() + days.hashCode().toLong() + CycleHelper.getSignature(context).hashCode()
         if ((mLastHash != 0L && !checkedEvents) || mLastHash == newHash) {
             return
         }

@@ -7,6 +7,7 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.res.Resources
+import android.graphics.Color
 import android.graphics.Paint
 import android.view.View
 import android.view.ViewGroup
@@ -139,6 +140,8 @@ class MyWidgetMonthlyProvider : AppWidgetProvider() {
             )
         )
 
+        val cycleCalculator = CycleHelper.getCalculator(context)
+        val widgetBgColor = context.config.widgetBgColor
         val daySlotLists = buildDaySlotLists(days.size, sortedKeys, eventDayIndices, eventByKey)
         val eventFontSize = smallerFontSize - 3f
         val weekRowHeights = days.chunked(COLUMN_COUNT).map { week ->
@@ -158,6 +161,14 @@ class MyWidgetMonthlyProvider : AppWidgetProvider() {
             val currTextColor = if (day.isThisMonth) dayTextColor else weakTextColor
             val id = res.getIdentifier("day_$i", "id", packageName)
             views.removeAllViews(id)
+            val phaseColor = cycleCalculator?.getPhaseColor(day.code)
+            val cycleBgColor = if (phaseColor == null) {
+                Color.TRANSPARENT
+            } else {
+                val color = CycleHelper.getDisplayColor(phaseColor, widgetBgColor)
+                if (day.isThisMonth) color else color.adjustAlpha(0.5f)
+            }
+            views.setInt(id, "setBackgroundColor", cycleBgColor)
             addDayNumber(context, views, day, currTextColor, id)
             setupDayOpenIntent(context, views, id, day.code)
 

@@ -9,6 +9,7 @@ import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
 import android.os.Handler
 import android.util.Range
+import android.util.TypedValue
 import android.view.DragEvent
 import android.view.GestureDetector
 import android.view.LayoutInflater
@@ -39,7 +40,9 @@ import org.fossify.calendar.extensions.getWeeklyViewItemHeight
 import org.fossify.calendar.extensions.intersects
 import org.fossify.calendar.extensions.seconds
 import org.fossify.calendar.extensions.shouldStrikeThrough
+import org.fossify.calendar.extensions.showDayLongPressActions
 import org.fossify.calendar.helpers.Config
+import org.fossify.calendar.helpers.CycleHelper
 import org.fossify.calendar.helpers.EDIT_ALL_OCCURRENCES
 import org.fossify.calendar.helpers.EDIT_FUTURE_OCCURRENCES
 import org.fossify.calendar.helpers.EDIT_SELECTED_OCCURRENCE
@@ -69,6 +72,7 @@ import org.fossify.commons.extensions.beGone
 import org.fossify.commons.extensions.beVisible
 import org.fossify.commons.extensions.beVisibleIf
 import org.fossify.commons.extensions.getContrastColor
+import org.fossify.commons.extensions.getProperBackgroundColor
 import org.fossify.commons.extensions.getProperPrimaryColor
 import org.fossify.commons.extensions.getProperTextColor
 import org.fossify.commons.extensions.hideKeyboard
@@ -210,6 +214,7 @@ class WeekFragment : Fragment(), WeeklyCalendar {
         }
 
         setupDayLabels()
+        applyCycleColors()
         updateCalendar()
 
         if (rowHeight != 0f && binding.root.width != 0) {
@@ -304,6 +309,10 @@ class WeekFragment : Fragment(), WeeklyCalendar {
             }
             label.setOnClickListener {
                 (activity as MainActivity).openDayFromWeekly(Formatter.getDateTimeFromCode(dayCode))
+            }
+            label.setOnLongClickListener {
+                requireActivity().showDayLongPressActions(dayCode)
+                true
             }
 
             binding.weekLettersHolder.addView(label)
@@ -579,7 +588,45 @@ class WeekFragment : Fragment(), WeeklyCalendar {
         return fullContentHeight * visibleRatio
     }
 
+    // colors the day labels and day columns by menstrual cycle phase
+    private fun applyCycleColors() {
+        val context = context ?: return
+        val calculator = if (isPrintVersion) null else CycleHelper.getCalculator(context)
+        val backgroundColor = context.getProperBackgroundColor()
+
+        for (i in 0 until binding.weekLettersHolder.childCount) {
+            val dayCode = Formatter.getDayCodeFromDateTime(weekDateTime.plusDays(i))
+            val phaseColor = calculator?.getPhaseColor(dayCode)
+            val label = binding.weekLettersHolder.getChildAt(i)
+            if (phaseColor == null) {
+                val outValue = TypedValue()
+                context.theme.resolveAttribute(android.R.attr.selectableItemBackgroundBorderless, outValue, true)
+                label.setBackgroundResource(outValue.resourceId)
+            } else {
+                label.setBackgroundColor(CycleHelper.getDisplayColor(phaseColor, backgroundColor))
+            }
+        }
+
+        for (i in 0 until binding.weekEventsColumnsHolder.childCount) {
+            val column = binding.weekEventsColumnsHolder.getChildAt(i)
+            val dayCode = column.tag?.toString() ?: continue
+            val phaseColor = calculator?.getPhaseColor(dayCode)
+            if (phaseColor == null) {
+                column.background = null
+            } else {
+                // a lighter tint than the label, so the hour grid and events stay readable
+                column.setBackgroundColor(CycleHelper.getDisplayColor(phaseColor, backgroundColor).adjustAlpha(0.5f))
+            }
+        }
+    }
+
     override fun updateWeeklyCalendar(events: ArrayList<Event>) {
+        activity?.runOnUiThread {
+            if (context != null && isAdded && !mWasDestroyed) {
+                applyCycleColors()
+            }
+        }
+
         val newHash = events.hashCode()
         if (newHash == lastHash || mWasDestroyed || context == null) {
             return

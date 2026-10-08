@@ -12,6 +12,7 @@ import org.fossify.calendar.activities.SimpleActivity
 import org.fossify.calendar.adapters.EventListAdapter
 import org.fossify.calendar.databinding.FragmentMonthDayBinding
 import org.fossify.calendar.extensions.*
+import org.fossify.calendar.helpers.CycleHelper
 import org.fossify.calendar.helpers.Config
 import org.fossify.calendar.helpers.DAY_CODE
 import org.fossify.calendar.helpers.Formatter
@@ -95,7 +96,7 @@ class MonthDayFragment : Fragment(), MonthlyCalendar, RefreshRecyclerViewListene
     }
 
     override fun updateMonthlyCalendar(context: Context, month: String, days: ArrayList<DayMonthly>, checkedEvents: Boolean, currTargetDate: DateTime) {
-        val newHash = month.hashCode() + days.hashCode().toLong()
+        val newHash = month.hashCode() + days.hashCode().toLong() + CycleHelper.getSignature(context).hashCode()
         if ((mLastHash != 0L && !checkedEvents) || mLastHash == newHash) {
             return
         }

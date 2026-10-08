@@ -362,4 +362,30 @@ class Config(context: Context) : BaseConfig(context) {
         get() = prefs.getBoolean(LAST_USED_SHOW_LIST_WIDGET_HEADER, true)
         set(lastUsedShowListWidgetHeader) = prefs.edit()
             .putBoolean(LAST_USED_SHOW_LIST_WIDGET_HEADER, lastUsedShowListWidgetHeader).apply()
+
+    // menstrual cycle tracking
+    var cycleTrackingEnabled: Boolean
+        get() = prefs.getBoolean(CYCLE_TRACKING_ENABLED, false)
+        set(enabled) = prefs.edit().putBoolean(CYCLE_TRACKING_ENABLED, enabled).apply()
+
+    var cycleLength: Int
+        get() = prefs.getInt(CYCLE_LENGTH, DEFAULT_CYCLE_LENGTH)
+        set(length) = prefs.edit().putInt(CYCLE_LENGTH, length.coerceIn(MIN_CYCLE_LENGTH, MAX_CYCLE_LENGTH)).apply()
+
+    /** Day codes (yyyyMMdd) of every recorded first day of a period, sorted ascending. */
+    var cyclePeriodStarts: List<String>
+        get() = prefs.getString(CYCLE_PERIOD_STARTS, "")!!
+            .split(",")
+            .filter { it.length == 8 }
+            .distinct()
+            .sorted()
+        set(starts) = prefs.edit()
+            .putString(CYCLE_PERIOD_STARTS, starts.filter { it.length == 8 }.distinct().sorted().joinToString(","))
+            .apply()
+
+    fun getCyclePhaseColor(phase: CyclePhase): Int =
+        prefs.getInt(CYCLE_PHASE_COLOR_PREFIX + phase.id, phase.defaultColor)
+
+    fun setCyclePhaseColor(phase: CyclePhase, color: Int) =
+        prefs.edit().putInt(CYCLE_PHASE_COLOR_PREFIX + phase.id, color).apply()
 }

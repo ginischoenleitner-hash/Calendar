@@ -20,6 +20,7 @@ import org.fossify.commons.adapters.MyRecyclerViewAdapter
 import org.fossify.commons.extensions.adjustAlpha
 import org.fossify.commons.extensions.applyColorFilter
 import org.fossify.commons.extensions.beVisibleIf
+import org.fossify.commons.extensions.getProperBackgroundColor
 import org.fossify.commons.extensions.getProperTextColor
 import org.fossify.commons.helpers.MEDIUM_ALPHA
 import org.fossify.commons.helpers.ensureBackgroundThread
@@ -193,6 +194,17 @@ class EventListAdapter(
             text = listSectionDay.title
             val dayColor = if (listSectionDay.isToday) properPrimaryColor else textColor
             setTextColor(dayColor)
+
+            // menstrual cycle phase as a pastel background of the day header
+            val phaseColor = CycleHelper.getCalculator(activity)?.getPhaseColor(listSectionDay.code)
+            if (phaseColor == null) {
+                background = null
+                setPadding(paddingStart, 0, paddingEnd, paddingBottom)
+            } else {
+                setBackgroundColor(CycleHelper.getDisplayColor(phaseColor, activity.getProperBackgroundColor()))
+                val verticalPadding = resources.getDimensionPixelSize(org.fossify.commons.R.dimen.small_margin)
+                setPadding(paddingStart, verticalPadding, paddingEnd, paddingBottom)
+            }
         }
     }
 

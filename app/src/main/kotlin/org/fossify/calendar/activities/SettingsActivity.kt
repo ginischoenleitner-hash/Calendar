@@ -11,6 +11,8 @@ import com.google.android.material.timepicker.MaterialTimePicker
 import com.google.android.material.timepicker.TimeFormat
 import org.fossify.calendar.R
 import org.fossify.calendar.databinding.ActivitySettingsBinding
+import org.fossify.calendar.dialogs.CyclePeriodStartsDialog
+import org.fossify.calendar.dialogs.CyclePhaseColorsDialog
 import org.fossify.calendar.dialogs.ExportEventsDialog
 import org.fossify.calendar.dialogs.ManageAutomaticBackupsDialog
 import org.fossify.calendar.dialogs.ManageSyncedCalendarsDialog
@@ -30,6 +32,8 @@ import org.fossify.calendar.helpers.ALLOW_CHANGING_TIME_ZONES
 import org.fossify.calendar.helpers.ALLOW_CREATING_TASKS
 import org.fossify.calendar.helpers.ALLOW_CUSTOMIZE_DAY_COUNT
 import org.fossify.calendar.helpers.DAILY_VIEW
+import org.fossify.calendar.helpers.MAX_CYCLE_LENGTH
+import org.fossify.calendar.helpers.MIN_CYCLE_LENGTH
 import org.fossify.calendar.helpers.DEFAULT_DURATION
 import org.fossify.calendar.helpers.DEFAULT_REMINDER_1
 import org.fossify.calendar.helpers.DEFAULT_REMINDER_2
@@ -189,6 +193,7 @@ class SettingsActivity : SimpleActivity() {
         setupStartWeekOn()
         setupHighlightWeekends()
         setupHighlightWeekendsColor()
+        setupCycleTracking()
         setupDeleteAllEvents()
         setupDisplayDescription()
         setupReplaceDescription()
@@ -233,6 +238,7 @@ class SettingsActivity : SimpleActivity() {
         arrayOf(
             binding.settingsColorCustomizationSectionLabel,
             binding.settingsGeneralSettingsLabel,
+            binding.settingsCycleLabel,
             binding.settingsRemindersLabel,
             binding.settingsCaldavLabel,
             binding.settingsNewEventsLabel,
@@ -536,6 +542,63 @@ class SettingsActivity : SimpleActivity() {
                     )
                 }
             }
+        }
+    }
+
+    private fun setupCycleTracking() = binding.apply {
+        settingsCycleTracking.isChecked = config.cycleTrackingEnabled
+        updateCycleSettingsVisibility()
+        settingsCycleTrackingHolder.setOnClickListener {
+            settingsCycleTracking.toggle()
+            config.cycleTrackingEnabled = settingsCycleTracking.isChecked
+            updateCycleSettingsVisibility()
+            updateWidgets()
+        }
+
+        settingsCycleLength.text = getCycleLengthText(config.cycleLength)
+        settingsCycleLengthHolder.setOnClickListener {
+            val items = ArrayList((MIN_CYCLE_LENGTH..MAX_CYCLE_LENGTH).map {
+                RadioItem(it, getCycleLengthText(it))
+            })
+
+            RadioGroupDialog(this@SettingsActivity, items, config.cycleLength) {
+                config.cycleLength = it as Int
+                settingsCycleLength.text = getCycleLengthText(config.cycleLength)
+                updateWidgets()
+            }
+        }
+
+        updateCyclePeriodStartsText()
+        settingsCyclePeriodStartsHolder.setOnClickListener {
+            CyclePeriodStartsDialog(this@SettingsActivity) {
+                updateCyclePeriodStartsText()
+                updateWidgets()
+            }
+        }
+
+        settingsCyclePhaseColorsHolder.setOnClickListener {
+            CyclePhaseColorsDialog(this@SettingsActivity) {
+                updateWidgets()
+            }
+        }
+    }
+
+    private fun updateCycleSettingsVisibility() = binding.apply {
+        val enabled = config.cycleTrackingEnabled
+        settingsCycleLengthHolder.beVisibleIf(enabled)
+        settingsCyclePeriodStartsHolder.beVisibleIf(enabled)
+        settingsCyclePhaseColorsHolder.beVisibleIf(enabled)
+    }
+
+    private fun getCycleLengthText(days: Int) = resources.getQuantityString(R.plurals.cycle_days, days, days)
+
+    private fun updateCyclePeriodStartsText() {
+        val starts = config.cyclePeriodStarts
+        binding.settingsCyclePeriodStarts.text = if (starts.isEmpty()) {
+            getString(R.string.cycle_no_period_starts)
+        } else {
+            // show the most recent entry and how many there are
+            "${Formatter.getDayTitle(this, starts.last())} (${starts.size})"
         }
     }
 
