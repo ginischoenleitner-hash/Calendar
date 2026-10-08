@@ -53,13 +53,13 @@ data class CycleDayInfo(
 object CycleHelper {
     /**
      * The cycle phases, in order. The first phase whose range contains a cycle day wins,
-     * so for very short cycles earlier phases take precedence. Days not covered by any phase stay uncolored.
+     * so for very short cycles earlier phases take precedence.
      *
      * Example for a 28 day cycle:
      *  - Menstruation:   days 1–6
      *  - Follikelphase:  days 7–9   (from day 7 until the ovulation window starts)
      *  - Eisprung:       days 10–16 (19 to 13 days before the cycle end)
-     *  - (no phase):     days 17–21
+     *  - Lutealphase:    days 17–21 (12 to 8 days before the cycle end)
      *  - PMS-Phase:      days 22–28 (the last 7 days)
      */
     val PHASES: List<CyclePhase> = listOf(
@@ -83,6 +83,13 @@ object CycleHelper {
             start = CycleDay.BeforeCycleEnd(19),
             end = CycleDay.BeforeCycleEnd(13),
             defaultColor = 0xFFDCCCF2.toInt()   // light purple
+        ),
+        CyclePhase(
+            id = "luteal",
+            nameRes = R.string.cycle_phase_luteal,
+            start = CycleDay.BeforeCycleEnd(12),
+            end = CycleDay.BeforeCycleEnd(8),
+            defaultColor = 0xFFBFDDF5.toInt()   // light blue
         ),
         CyclePhase(
             id = "pms",
